@@ -1,66 +1,72 @@
-  <!DOCTYPE html>
-  <meta charset="utf-8" />
-  <title>WebSocket Test</title>
-  <script language="javascript" type="text/javascript">
-
-  var wsUri = "wss://rn2rbxw2cb.execute-api.us-west-2.amazonaws.com/test";
-  var output;
-
-  function init()
-  {
-    output = document.getElementById("output");
-    testWebSocket();
-  }
-
-  function testWebSocket()
-  {
-    websocket = new WebSocket(wsUri);
-    websocket.onopen = function(evt) { onOpen(evt) };
-    //websocket.onclose = function(evt) { onClose(evt) };
-    websocket.onmessage = function(evt) { onMessage(evt) };
-    websocket.onerror = function(evt) { onError(evt) };
-  }
-
-  function onOpen(evt)
-  {
-    writeToScreen("CONNECTED");
-    doSend('{"action": "sendToAll","data": "Hello."}');
-  }
-
-  function onClose(evt)
-  {
-    writeToScreen("DISCONNECTED");
-  }
-
-  function onMessage(evt)
-  {
-    writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
-    //websocket.close();
-  }
-
-  function onError(evt)
-  {
-    writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
-  }
-
-  function doSend(message)
-  {
-    writeToScreen("SENT: " + message);
-    websocket.send(message);
-  }
-
-  function writeToScreen(message)
-  {
-    var pre = document.createElement("p");
-    pre.style.wordWrap = "break-word";
-    pre.innerHTML = message;
-    output.appendChild(pre);
-  }
-
-  window.addEventListener("load", init, false);
-
-  </script>
-
-  <h2>WebSocket Test</h2>
-
-  <div id="output"></div>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+    <div id="app">
+            <div v-if="status">websocket <b>Connected</b></div>
+            <div v-else="status">websocket <b>Disconnected</b></div>
+            <div name="login" v-if="token==''">
+                Username: <input type="text" name="fname" v-model="username"/><br />
+                Password: <input type="text" name="lname" v-model="password"/>
+                <button v-on:click="gettoken">go</button>
+            </div>
+            <div name="portal" v-else="token!=''">
+                Now you have token.
+            </div>
+    </div>
+    <script>
+    const wsUri = "wss://lc70mxewm8.execute-api.us-west-2.amazonaws.com/dev";
+    var app = new Vue({
+        el: '#app',
+        data: {
+          username: 'test',
+          password: '',
+          querystring: '',
+          websocket: null,
+          status: false,
+          token: ""
+        },
+        created: function(){
+            
+        },
+        mounted: function(){
+            let self = this;
+            this.websocket = new WebSocket(wsUri);
+            this.websocket.onmessage = function(evt) {
+                console.log(evt);
+             };
+            this.websocket.onopen = function(evt){
+                self.status = true;
+                console.log(evt);
+            };
+            this.websocket.onclose = function(evt){
+                self.status = false;
+                console.log(evt);
+            };
+        },
+        updated: function(){
+            this.$nextTick(function(){
+                data = encodeURI('{"username"="'+this.username+'","password"="'+this.password+'"}');
+                this.querystring = '{"action":"sendtoall","data":"'+data+'"}';
+                console.log(this.querystring);
+            });
+        },
+        methods: {
+            gettoken(){
+                console.log(this.querystring);
+                this.doSend(this.querystring);
+            },
+            doSend(data) {
+                this.websocket.send(data);
+            }
+        } 
+    })
+    </script>
+</body>
+</html>
